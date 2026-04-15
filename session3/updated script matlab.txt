@@ -1,0 +1,51 @@
+clear all
+close all
+clc
+
+
+%fc = 914e6;
+fc = 2e9;
+fs = 5e6;  %sampling frequency, with a max of 6.144e7 Hz;
+Ns_f = 100e3; %Samples per frame, with a max of 1.67772e+07; 
+
+%CReating the pluto radio Rx handle
+Rx = sdrrx('Pluto','CenterFrequency',fc,'BasebandSampleRate',fs, ... 
+    'SamplesPerFrame', Ns_f,'OutputDataType','double');
+
+Rx.CenterFrequency = fc; %Setting the centre frequency of Pluto
+
+%% Creating the spectram analyzer handle 
+span_freq = 500e3;  %Frequency span for the spec-analyzer
+
+
+
+%CReating the spectrum analyzer handle
+scope = spectrumAnalyzer( ...
+   'FrequencyOffset',fc, ...  %centre freq of scope offset by 10kHz
+   'SpectrumType','Power', ...
+   'FrequencySpan','start-and-stop-frequencies', ...
+   'FFTLength', 2^14, ...
+   'StartFrequency', fc-span_freq/2, ...
+   'StopFrequency', fc+span_freq/2, ...
+   'SampleRate', fs, ...
+   'YLimits',[-60 60], ...
+   'SpectralAverages', 20);
+
+%% Continuous scoping
+% for subsequent runs after the end of 'run duration', please only run this
+% section for obeserving further results, no need to run the entire script 
+% unless you are chaning parameters for the radio
+
+runtime = tic;
+run_duration = 5; %run duration in seconds
+
+while toc(runtime) < run_duration
+     
+    % % Receive a frame
+    data = Rx();
+
+    % Display the frame
+    scope(data); 
+end
+
+disp('End of Experiment');
